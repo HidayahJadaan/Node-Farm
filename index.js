@@ -2,19 +2,21 @@
 
 const http = require("http");
 const url = require("url");
-
 const fs = require("fs");
+const slugify = require('slugify');
+
 
 const server = http.createServer((req, res) => {
-  // on each new request will log it to the console
-  // console.log(req.url);
-  const pathName = req.url;
-
+  const { query, pathname } = url.parse(req.url, true);
   // ===================================
 
   const data = fs.readFileSync(`${__dirname}/dev-data/data.json`);
   const dataObj = JSON.parse(data); //array of objects
 
+
+  const slugs = dataObj.map(el => slugify(el.productName),{lower: true});
+  // console.log(slugs);
+  
   // ===================================
 
   // using regular expression not "" | ' ==> because some times we have multiple items
@@ -48,7 +50,7 @@ const server = http.createServer((req, res) => {
   );
 
   //   OVERVIEW PAGE
-  if (pathName === "/" || pathName === "/overview") {
+  if (pathname === "/" || pathname === "/overview") {
     res.writeHead(200, { "Content-type": "text/html" });
     const cardsHTML = dataObj
       .map((card) => replaceTemplate(tempCard, card))
@@ -58,11 +60,19 @@ const server = http.createServer((req, res) => {
     res.end(output);
 
     // PRODUCT PAGE
-  } else if (pathName === "/product") {
-    res.end("THIS IS THE PRODUCT");
+  } else if (pathname === "/product") {
+
+    res.writeHead(200, {
+      'Content-type': 'text/html'
+    });
+    const product = dataObj[query.id];
+    const output = replaceTemplate(tempProduct, product);
+    res.end(output);
+
+    // res.end("THIS IS THE PRODUCT");
 
     // API PAGE
-  } else if (pathName === "/api") {
+  } else if (pathname === "/api") {
     res.writeHead(200, { "Content-type": "application/json" });
     res.end(data);
 
@@ -77,6 +87,6 @@ const server = http.createServer((req, res) => {
   }
 });
 // START LISTENING ON THE UPCOMMING REQUESTS
-server.listen(8000, "127.0.0.1", () => {
-  console.log("LISTENING TO REQUESTS ON PORT 8000");
+server.listen(9000, "127.0.0.1", () => {
+  console.log("LISTENING TO REQUESTS ON PORT 9000");
 });
